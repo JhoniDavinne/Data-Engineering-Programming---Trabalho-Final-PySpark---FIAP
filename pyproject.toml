@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "projeto-final-pedidos-recusados-legitimos"
+version = "1.0.0"
+description = "Pipeline PySpark que gera o relatório de pedidos recusados e legítimos (FIAP - Data Engineering Programming)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Aluno FIAP - Data Engineering Programming" }
+]
+keywords = ["pyspark", "data-engineering", "fiap", "etl"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pyspark>=3.5,<4.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9.0"
+]
+
+[project.scripts]
+projeto-final = "projeto_final.__main__:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-q"
+testpaths = ["tests"]

@@ -1,0 +1,10 @@
+include README.md
+include requirements.txt
+include pyproject.toml
+include MANIFEST.in
+include main.py
+recursive-include src *.py
+recursive-include tests *.py
+recursive-exclude data *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
