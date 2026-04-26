@@ -268,7 +268,15 @@ git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data/input/dat
 git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data/input/dataset-json-pagamentos
 ```
 
-**CMD / PowerShell** (a partir da raiz do projeto):
+**PowerShell** (a partir da raiz do projeto):
+
+```powershell
+New-Item -ItemType Directory -Path "data\input" -Force | Out-Null
+git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data\input\datasets-csv-pedidos
+git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data\input\dataset-json-pagamentos
+```
+
+**CMD** (a partir da raiz do projeto):
 
 ```bat
 mkdir data\input 2>nul
