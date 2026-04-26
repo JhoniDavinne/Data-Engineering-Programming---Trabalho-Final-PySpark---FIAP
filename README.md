@@ -56,7 +56,7 @@ Projeto Final/
 | **Java JDK** | 8, 11 ou 17              |
 
 > O Java é exigência do Spark. Verifique com `java -version`.
-## Instalação Requesitos do Projeto
+## Instalação de requisitos do projeto
 
 
 <details>
@@ -94,13 +94,15 @@ export PATH="$JAVA_HOME/bin:$PATH"
 </details>
 
 <details>
-<summary><strong>Windows (winget)</strong></summary>
+<summary><strong>Windows (winget) — PowerShell e Git Bash</strong></summary>
 
 <br>
 
-**Terminal:** PowerShell (recomendado) **como Administrador**.
+**Terminal:** PowerShell (recomendado) **como Administrador** para `winget`, ou **Git Bash** (MSYS2) com `winget` no `PATH` (comum no Windows 10/11).
 
-**PowerShell**
+### PowerShell
+
+**Java (JDK 17)**
 
 ```powershell
 winget install --id Microsoft.OpenJDK.17 --silent --accept-package-agreements --accept-source-agreements
@@ -109,11 +111,10 @@ $env:Path += ";$env:JAVA_HOME\bin"
 ```
 
 > Ajuste o caminho do `JAVA_HOME` conforme a versão instalada em `C:\Program Files\Microsoft\`.
-<br>
 
-#### o Windows nativo, o Spark costuma precisar de `winutils.exe` e `hadoop.dll` em `C:\hadoop\bin` para operações de filesystem/permissão.
+> **No** Windows nativo, o Spark costuma precisar de `winutils.exe` e `hadoop.dll` em `C:\hadoop\bin` para operações de filesystem/permissão.
 
-**PowerShell**
+**winutils**
 
 ```powershell
 New-Item -ItemType Directory -Path "C:\hadoop\bin" -Force | Out-Null
@@ -122,6 +123,32 @@ Invoke-WebRequest -Uri "https://github.com/steveloughran/winutils/raw/master/had
 [Environment]::SetEnvironmentVariable("HADOOP_HOME", "C:\hadoop", "User")
 $env:Path += ";C:\hadoop\bin"
 ```
+
+### Git Bash (Windows)
+
+Use os **mesmos** destinos de pasta; no Bash, o disco `C:\` é `/c/`. Confira o nome exato da pasta do JDK em `/c/Program Files/Microsoft/`.
+
+**Java (JDK 17)**
+
+```bash
+winget install --id Microsoft.OpenJDK.17 --silent --accept-package-agreements --accept-source-agreements
+export JAVA_HOME="/c/Program Files/Microsoft/jdk-17.0.18.8-hotspot"
+export PATH="$JAVA_HOME/bin:$PATH"
+```
+
+**winutils**
+
+```bash
+mkdir -p /c/hadoop/bin
+curl -fsSL -o /c/hadoop/bin/winutils.exe "https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/winutils.exe"
+curl -fsSL -o /c/hadoop/bin/hadoop.dll "https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/hadoop.dll"
+export HADOOP_HOME="/c/hadoop"
+export PATH="$HADOOP_HOME/bin:$PATH"
+```
+
+Para deixar `JAVA_HOME`, `HADOOP_HOME` e `PATH` permanentes: use **Variáveis de ambiente** do Windows (como no bloco PowerShell) ou adicione os `export` ao `~/.bashrc` do Git Bash, se for sempre usar só esse terminal.
+
+> Se o `winget` não for encontrado no Git Bash, abra o **PowerShell** só para a instalação do JDK e depois defina as variáveis no Bash conforme o caminho real da pasta.
 
 </details>
 
@@ -280,6 +307,8 @@ O arquivo `tests/test_relatorio_pedidos.py` valida:
 ## Datasets
 
 Os arquivos **não** vêm no clone deste repositório: é preciso clonar os dois repositórios do professor **dentro de** `data/input/` (na raiz do projeto):
+
+**Git Bash** (a partir da raiz do projeto):
 
 ```bash
 mkdir -p data/input
