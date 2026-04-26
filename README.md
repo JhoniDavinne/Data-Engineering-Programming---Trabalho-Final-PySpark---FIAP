@@ -55,9 +55,11 @@ Projeto Final/
 | **Java JDK** | 8, 11 ou 17              |
 
 > O Java é exigência do Spark. Verifique com `java -version`.
+## Instalação Java
+
 
 <details>
-<summary><strong>Instalar Java — macOS (Homebrew)</strong></summary>
+<summary><strong>macOS (Homebrew)</strong></summary>
 
 ```bash
 brew install --cask temurin@17
@@ -69,7 +71,7 @@ Torne persistente adicionando os `export` ao `~/.zshrc`.
 </details>
 
 <details>
-<summary><strong>Instalar Java — Ubuntu/Debian</strong></summary>
+<summary><strong>Ubuntu/Debian</strong></summary>
 
 ```bash
 sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
@@ -81,7 +83,7 @@ Torne persistente adicionando os `export` ao `~/.bashrc`.
 </details>
 
 <details>
-<summary><strong>Instalar Java — Fedora/RHEL</strong></summary>
+<summary><strong>Fedora/RHEL</strong></summary>
 
 ```bash
 sudo dnf install -y java-17-openjdk-devel
@@ -91,7 +93,13 @@ export PATH="$JAVA_HOME/bin:$PATH"
 </details>
 
 <details>
-<summary><strong>Instalar Java — Windows (winget)</strong></summary>
+<summary><strong>Windows (winget)</strong></summary>
+
+<br>
+
+**Terminal:** PowerShell (recomendado) **como Administrador**.
+
+**PowerShell**
 
 ```powershell
 winget install --id Microsoft.OpenJDK.17 --silent --accept-package-agreements --accept-source-agreements
@@ -100,32 +108,38 @@ $env:Path += ";$env:JAVA_HOME\bin"
 ```
 
 > Ajuste o caminho do `JAVA_HOME` conforme a versão instalada em `C:\Program Files\Microsoft\`.
-</details>
-
-<details>
+<br>
+<br>
 <summary><strong>Requisito extra Windows — <code>winutils.exe</code></strong></summary>
 
-O Hadoop no Windows exige `winutils.exe` + `hadoop.dll` em `C:\hadoop\bin`.
+<br>
 
-```bash
-mkdir -p /c/hadoop/bin
-curl -L -o /c/hadoop/bin/winutils.exe \
-    https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/winutils.exe
-curl -L -o /c/hadoop/bin/hadoop.dll \
-    https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/hadoop.dll
+- No Windows nativo, o Spark costuma exigir binários do Hadoop (winutils.exe e hadoop.dll) para algumas operações de filesystem/permissão.
+- Então, nesse caso, você usa só um “pedaço” do Hadoop (binários nativos), não um ambiente Hadoop completo., e para isso exige `winutils.exe` + `hadoop.dll` em `C:\hadoop\bin`.
+
+**PowerShell**
+
+```powershell
+New-Item -ItemType Directory -Path "C:\hadoop\bin" -Force | Out-Null
+Invoke-WebRequest -Uri "https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/winutils.exe" -OutFile "C:\hadoop\bin\winutils.exe"
+Invoke-WebRequest -Uri "https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/hadoop.dll" -OutFile "C:\hadoop\bin\hadoop.dll"
 ```
+
 
 ```powershell
 [Environment]::SetEnvironmentVariable("HADOOP_HOME", "C:\hadoop", "User")
 $env:Path += ";C:\hadoop\bin"
 ```
 
-**Linux/macOS não precisam deste passo.**
+
+
 </details>
+
+
 
 ---
 
-## Instalação
+## Instalação do Ambiente venv + pip install
 
 <details>
 <summary><strong>Linux / macOS</strong></summary>
@@ -141,20 +155,59 @@ pip install -r requirements.txt
 <details>
 <summary><strong>Windows (PowerShell)</strong></summary>
 
+<br>
+
+**Terminal:** PowerShell (recomendado) **como Administrador**.
+
+**PowerShell**
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+Se aparecer erro de política de execução (scripts desabilitados), rode antes:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+```
+
+Depois execute a ativação novamente:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+> Esse ajuste vale **apenas para a sessão atual** do PowerShell (não altera permanentemente a máquina).
 </details>
 
 <details>
 <summary><strong>Windows (Git Bash)</strong></summary>
 
+<br>
+
+**Git Bash**
+
 ```bash
 python -m venv .venv
 source .venv/Scripts/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+</details>
+
+<details>
+<summary><strong>Windows (CMD) — alternativa sem <code>ExecutionPolicy</code></strong></summary>
+
+<br>
+
+**CMD**
+
+```bat
+python -m venv .venv
+.venv\Scripts\activate.bat
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -262,6 +315,7 @@ Todas centralizadas em `src/projeto_final/config/app_config.py`:
 | Download lento do PySpark | Normal na 1ª vez (~300 MB) |
 | `winutils` / `NativeIO` (Windows) | Instale `winutils.exe` (ver Requisitos) |
 | `python not found` (Windows) | Desative o alias do Python em *Configurações → Aliases de execução* |
+| `Activate.ps1` bloqueado (Windows) | Use `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned` ou ative via CMD (`activate.bat`) |
 | `ensurepip not available` (Ubuntu) | `sudo apt-get install -y python3-venv` |
 
 </details>
