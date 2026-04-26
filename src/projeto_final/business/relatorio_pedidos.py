@@ -27,7 +27,7 @@ class RelatorioPedidosRecusadosLegitimos:
 
     Regras adicionais:
 
-    - filtra somente pedidos do ano informado em ``ano_filtro`` (default 2025);
+    - filtra somente pedidos do ano informado em ``ano_filtro``;
     - ordena por ``uf``, ``forma_pagamento`` e ``data_criacao``.
     """
 
@@ -39,7 +39,7 @@ class RelatorioPedidosRecusadosLegitimos:
         "data_criacao",
     ]
 
-    def __init__(self, ano_filtro: int = 2025) -> None:
+    def __init__(self, ano_filtro: int) -> None:
         self._ano_filtro = ano_filtro
         self._logger = logging.getLogger(self.__class__.__name__)
 

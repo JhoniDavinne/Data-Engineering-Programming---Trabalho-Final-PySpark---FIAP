@@ -7,6 +7,7 @@ schemas, readers, writer, lógica de negócio e orquestrador) e injeta-as no
 
 from __future__ import annotations
 
+import argparse
 import logging
 import os
 import sys
@@ -55,9 +56,30 @@ from projeto_final.spark.spark_session_manager import (  # noqa: E402
 )
 
 
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parseia argumentos de linha de comando para sobrescrever configurações."""
+    parser = argparse.ArgumentParser(
+        description="Executa o pipeline de pedidos recusados e legítimos."
+    )
+    parser.add_argument(
+        "--ano-filtro",
+        "--ano",
+        dest="ano_filtro",
+        type=int,
+        help=(
+            "Ano usado no filtro de pedidos. "
+            "Precedência: CLI > PROJETO_FINAL_ANO_FILTRO > default."
+        ),
+    )
+    return parser.parse_args(argv)
+
+
 def main() -> int:
     """Ponto de entrada da aplicação."""
+    args = _parse_args()
     config = AppConfig()
+    if args.ano_filtro is not None:
+        config.ano_filtro = args.ano_filtro
 
     logging.basicConfig(
         level=getattr(logging, config.log_level.upper(), logging.INFO),

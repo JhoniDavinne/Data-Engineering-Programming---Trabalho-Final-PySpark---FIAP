@@ -9,7 +9,7 @@ Pipeline PySpark que cruza dados de **pedidos** e **pagamentos** para gerar um r
 
 ## Objetivo
 
-A alta gestão deseja identificar pedidos cujo pagamento foi **recusado** mas a avaliação de fraude os classificou como **legítimos** (ano **2025**).
+A alta gestão deseja identificar pedidos cujo pagamento foi **recusado** mas a avaliação de fraude os classificou como **legítimos** (ano de filtro configurável; padrão **2025**).
 
 | Coluna            | Origem                                       |
 | ----------------- | -------------------------------------------- |
@@ -225,6 +225,18 @@ Com o ambiente virtual ativo, na raiz do projeto:
 python main.py
 ```
 
+Exemplo informando o ano explicitamente via CLI:
+
+```bash
+python main.py --ano-filtro 2024
+```
+
+Também é possível usar o alias:
+
+```bash
+python main.py --ano 2024
+```
+
 ### Onde fica o resultado?
 
 O relatório Parquet é salvo em:
@@ -246,7 +258,7 @@ pytest
 O arquivo `tests/test_relatorio_pedidos.py` valida:
 
 1. Filtragem `status=false` + `fraude=false`
-2. Filtragem pelo ano 2025
+2. Filtragem pelo ano configurado (default 2025)
 3. Cálculo `valor_total = valor_unitario × quantidade`
 4. Ordenação (`uf`, `forma_pagamento`, `data_criacao`)
 5. Schema de saída (colunas esperadas)
@@ -283,6 +295,8 @@ Todas centralizadas em `src/projeto_final/config/app_config.py`:
 | `PROJETO_FINAL_TIMEZONE`           | `UTC`                                                   |
 
 </details>
+
+Precedência para o ano de filtro: `--ano-filtro` / `--ano` (CLI) > `PROJETO_FINAL_ANO_FILTRO` (ambiente) > valor padrão `2025`.
 
 <details>
 <summary><strong>Cobertura dos critérios da disciplina</strong></summary>

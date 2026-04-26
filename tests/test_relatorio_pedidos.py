@@ -156,3 +156,13 @@ def test_gerar_calcula_valor_total_como_unitario_vezes_quantidade(
     assert mapa["p1"] == pytest.approx(1500.0 * 2)
     assert mapa["p5"] == pytest.approx(600.0 * 4)
     assert mapa["p6"] == pytest.approx(500.0 * 1)
+
+
+def test_gerar_permite_reutilizar_pipeline_para_outro_ano(
+    pedidos_df, pagamentos_df
+):
+    relatorio = RelatorioPedidosRecusadosLegitimos(ano_filtro=2024)
+    linhas = relatorio.gerar(pedidos_df, pagamentos_df).collect()
+
+    assert [row["id_pedido"] for row in linhas] == ["p4"]
+    assert linhas[0]["valor_total"] == pytest.approx(2000.0)
