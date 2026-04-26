@@ -94,11 +94,15 @@ export PATH="$JAVA_HOME/bin:$PATH"
 </details>
 
 <details>
-<summary><strong>Windows (winget) — PowerShell e Git Bash</strong></summary>
+<summary><strong>Windows</strong></summary>
 
 <br>
 
-**Terminal:** PowerShell (recomendado) **como Administrador** para `winget`, ou **Git Bash** (MSYS2) com `winget` no `PATH` (comum no Windows 10/11).
+**Instalador:** `winget` (Windows 10/11). Em muitas máquinas o PowerShell precisa ser **como administrador** na primeira instalação; no **Git Bash** ou **CMD** o `winget` costuma funcionar se estiver no `PATH`.
+
+<br>
+
+> **No** Windows nativo, o Spark costuma precisar de `winutils.exe` e `hadoop.dll` em `C:\hadoop\bin` para operações de filesystem/permissão.
 
 <details>
 <summary><strong>PowerShell</strong></summary>
@@ -150,13 +154,39 @@ export PATH="$HADOOP_HOME/bin:$PATH"
 ```
 </details>
 
+<details>
+<summary><strong>CMD</strong></summary>
+
+**Java (JDK 17)**
+
+```bat
+winget install --id Microsoft.OpenJDK.17 --silent --accept-package-agreements --accept-source-agreements
+setx JAVA_HOME "C:\Program Files\Microsoft\jdk-17.0.18.8-hotspot"
+setx HADOOP_HOME "C:\hadoop"
+```
+
+> Ajuste o caminho de `JAVA_HOME` se a pasta do JDK tiver outro nome. Após `setx`, abra um **novo** CMD. Se o comando `java` não for reconhecido, adicione manualmente `;%JAVA_HOME%\bin` e `;%HADOOP_HOME%\bin` à variável de usuário **Path** (Configurações → Variáveis de ambiente) ou use o bloco **PowerShell** acima, que ajusta o `Path` na sessão.
+
+
+**winutils** (requer `curl` no CMD — padrão no Windows 10/11)
+
+```bat
+mkdir C:\hadoop\bin 2>nul
+curl -fsSL -o C:\hadoop\bin\winutils.exe "https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/winutils.exe"
+curl -fsSL -o C:\hadoop\bin\hadoop.dll "https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/hadoop.dll"
+```
+
+> O `HADOOP_HOME` já foi definido no bloco **Java (JDK 17)** acima. Se o `curl` não existir, use o bloco **PowerShell** para baixar os arquivos ou copie os `Invoke-WebRequest` dali.
+
+</details>
+
 <br>
 
-Para deixar `JAVA_HOME`, `HADOOP_HOME` e `PATH` permanentes: use **Variáveis de ambiente** do Windows (como no bloco PowerShell) ou adicione os `export` ao `~/.bashrc` do Git Bash, se for sempre usar só esse terminal.
+Para deixar `JAVA_HOME`, `HADOOP_HOME` e `PATH` permanentes: use **Variáveis de ambiente** do Windows (como no bloco PowerShell), `setx` (CMD) ou adicione os `export` ao `~/.bashrc` do Git Bash, se for sempre usar só esse terminal.
 
 <br>
 
-> Se o `winget` não for encontrado no Git Bash, abra o **PowerShell** só para a instalação do JDK e depois defina as variáveis no Bash conforme o caminho real da pasta.
+> Se o `winget` não for encontrado no **Git Bash** ou no **CMD**, abra o **PowerShell** só para a instalação do JDK e depois ajuste as variáveis conforme o caminho real da pasta.
 
 </details>
 
@@ -164,6 +194,8 @@ Para deixar `JAVA_HOME`, `HADOOP_HOME` e `PATH` permanentes: use **Variáveis de
 ---
 
 ## Instalação do ambiente (venv + pip)
+
+> ATENÇÃO: Execute o comando de instalação do ambiente virtual na **raiz do repositório** (pasta onde está `requirements.txt`).
 
 <details>
 <summary><strong>1 - Instalação automática (recomendado no Windows)</strong></summary>
@@ -260,7 +292,8 @@ python -m pip install -r requirements.txt
 
 Os arquivos **não** vêm no clone deste repositório: é preciso clonar os dois repositórios do professor **dentro de** `data/input/` (na raiz do projeto):
 
-**Git Bash** (a partir da raiz do projeto):
+<details>
+<summary><strong>Git Bash</strong></summary>
 
 ```bash
 mkdir -p data/input
@@ -268,7 +301,10 @@ git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data/input/dat
 git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data/input/dataset-json-pagamentos
 ```
 
-**PowerShell** (a partir da raiz do projeto):
+</details>
+
+<details>
+<summary><strong>PowerShell</strong></summary>
 
 ```powershell
 New-Item -ItemType Directory -Path "data\input" -Force | Out-Null
@@ -276,13 +312,20 @@ git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data\input\dat
 git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data\input\dataset-json-pagamentos
 ```
 
-**CMD** (a partir da raiz do projeto):
+</details>
+
+<details>
+<summary><strong>CMD</strong></summary>
 
 ```bat
 mkdir data\input 2>nul
 git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data\input\datasets-csv-pedidos
 git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data\input\dataset-json-pagamentos
 ```
+
+</details>
+
+<br>
 
 | Dataset      | Repositório                                              | Caminho local esperado                                   |
 | ------------ | -------------------------------------------------------- | ------------------------------------------------------- |
@@ -303,12 +346,6 @@ Com o ambiente virtual **ativo** e na **raiz do projeto** (onde está `main.py`)
 python main.py
 ```
 
-Se você abriu um terminal novo, ative de novo o venv antes:
-
-- PowerShell: `.\.venv\Scripts\Activate.ps1` (rode antes `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force` se necessário)
-- CMD: `.venv\Scripts\activate.bat`
-- Git Bash: `source .venv/Scripts/activate`
-
 Exemplo informando o ano explicitamente via CLI:
 
 ```bash
@@ -320,6 +357,13 @@ Também é possível usar o alias:
 ```bash
 python main.py --ano 2024
 ```
+
+Se você abriu um terminal novo, ative de novo o venv antes:
+
+- PowerShell: `.\.venv\Scripts\Activate.ps1` (rode antes `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force` se necessário)
+- CMD: `.venv\Scripts\activate.bat`
+- Git Bash: `source .venv/Scripts/activate`
+
 
 ### Onde fica o resultado?
 
