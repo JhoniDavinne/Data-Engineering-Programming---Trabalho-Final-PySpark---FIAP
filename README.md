@@ -100,7 +100,8 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 **Terminal:** PowerShell (recomendado) **como Administrador** para `winget`, ou **Git Bash** (MSYS2) com `winget` no `PATH` (comum no Windows 10/11).
 
-### PowerShell
+<details>
+<summary><strong>PowerShell</strong></summary>
 
 **Java (JDK 17)**
 
@@ -123,8 +124,10 @@ Invoke-WebRequest -Uri "https://github.com/steveloughran/winutils/raw/master/had
 [Environment]::SetEnvironmentVariable("HADOOP_HOME", "C:\hadoop", "User")
 $env:Path += ";C:\hadoop\bin"
 ```
+</details>
 
-### Git Bash (Windows)
+<details>
+<summary><strong>Git Bash (Windows)</strong></summary>
 
 Use os **mesmos** destinos de pasta; no Bash, o disco `C:\` é `/c/`. Confira o nome exato da pasta do JDK em `/c/Program Files/Microsoft/`.
 
@@ -145,8 +148,13 @@ curl -fsSL -o /c/hadoop/bin/hadoop.dll "https://github.com/steveloughran/winutil
 export HADOOP_HOME="/c/hadoop"
 export PATH="$HADOOP_HOME/bin:$PATH"
 ```
+</details>
+
+<br>
 
 Para deixar `JAVA_HOME`, `HADOOP_HOME` e `PATH` permanentes: use **Variáveis de ambiente** do Windows (como no bloco PowerShell) ou adicione os `export` ao `~/.bashrc` do Git Bash, se for sempre usar só esse terminal.
+
+<br>
 
 > Se o `winget` não for encontrado no Git Bash, abra o **PowerShell** só para a instalação do JDK e depois defina as variáveis no Bash conforme o caminho real da pasta.
 
