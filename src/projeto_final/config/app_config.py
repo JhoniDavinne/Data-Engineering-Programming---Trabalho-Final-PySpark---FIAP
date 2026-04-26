@@ -87,12 +87,19 @@ class AppConfig:
         default_factory=lambda: os.getenv("PROJETO_FINAL_TIMEZONE", "UTC")
     )
 
+    def _spark_glob(self, input_dir: str, file_glob: str) -> str:
+        """Caminho com glob no estilo POSIX (Spark no Windows lida melhor assim)."""
+        base = Path(input_dir)
+        if not base.is_absolute():
+            base = _project_root() / base
+        return str((base.resolve() / file_glob).as_posix())
+
     @property
     def pedidos_glob(self) -> str:
         """Glob pattern que cobre todos os arquivos gzip de pedidos."""
-        return str(Path(self.pedidos_input_path) / "pedidos-*.csv.gz")
+        return self._spark_glob(self.pedidos_input_path, "pedidos-*.csv.gz")
 
     @property
     def pagamentos_glob(self) -> str:
         """Glob pattern que cobre todos os arquivos gzip de pagamentos."""
-        return str(Path(self.pagamentos_input_path) / "pagamentos-*.json.gz")
+        return self._spark_glob(self.pagamentos_input_path, "pagamentos-*.json.gz")

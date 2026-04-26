@@ -8,7 +8,6 @@ from pyspark.sql.types import (
     StringType,
     StructField,
     StructType,
-    TimestampType,
 )
 
 
@@ -17,6 +16,10 @@ class PedidosSchema:
 
     Estrutura conforme documentação do repositório
     ``datasets-csv-pedidos`` (separador ``;``, header presente, gzip).
+
+    ``data_criacao`` é lida como string no CSV e convertida para timestamp em
+    :class:`PedidosReader`, para aceitar ISO com/sem fração de segundos e
+    somente data (``yyyy-MM-dd``), sem perder linhas por formato estrito.
     """
 
     SCHEMA: StructType = StructType(
@@ -25,7 +28,7 @@ class PedidosSchema:
             StructField("produto", StringType(), nullable=True),
             StructField("valor_unitario", DoubleType(), nullable=True),
             StructField("quantidade", LongType(), nullable=True),
-            StructField("data_criacao", TimestampType(), nullable=True),
+            StructField("data_criacao", StringType(), nullable=True),
             StructField("uf", StringType(), nullable=True),
             StructField("id_cliente", LongType(), nullable=True),
         ]

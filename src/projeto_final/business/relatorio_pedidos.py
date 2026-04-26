@@ -78,7 +78,11 @@ class RelatorioPedidosRecusadosLegitimos:
                     F.col("uf"),
                     F.col("forma_pagamento"),
                     F.col("valor_total"),
-                    F.col("data_criacao"),
+                    # String ISO evita `{}` em exportadores JSON que não serializam
+                    # TIMESTAMP do Parquet corretamente.
+                    F.date_format(
+                        F.col("data_criacao"), "yyyy-MM-dd'T'HH:mm:ss"
+                    ).alias("data_criacao"),
                 )
                 .orderBy(
                     F.col("uf").asc(),

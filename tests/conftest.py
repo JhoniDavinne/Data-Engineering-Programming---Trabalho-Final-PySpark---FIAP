@@ -23,8 +23,8 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 _CURRENT_PYTHON = sys.executable
-os.environ.setdefault("PYSPARK_PYTHON", _CURRENT_PYTHON)
-os.environ.setdefault("PYSPARK_DRIVER_PYTHON", _CURRENT_PYTHON)
+os.environ["PYSPARK_PYTHON"] = _CURRENT_PYTHON
+os.environ["PYSPARK_DRIVER_PYTHON"] = _CURRENT_PYTHON
 
 from pyspark.sql import SparkSession  # noqa: E402
 
