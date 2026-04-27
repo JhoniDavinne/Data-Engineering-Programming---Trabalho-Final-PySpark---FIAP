@@ -96,6 +96,8 @@ export PATH="$JAVA_HOME/bin:$PATH"
 <details>
 <summary><strong>Windows</strong></summary>
 
+<br>
+
 **Instalador:** `winget` (Windows 10/11). Em muitas máquinas o PowerShell precisa ser **como administrador** na primeira instalação; no **Git Bash** ou **CMD** o `winget` costuma funcionar se estiver no `PATH`.
 
 <details>
@@ -136,6 +138,8 @@ winget install --id Microsoft.OpenJDK.17 --silent --accept-package-agreements --
 export JAVA_HOME="/c/Program Files/Microsoft/jdk-17.0.18.8-hotspot"
 export PATH="$JAVA_HOME/bin:$PATH"
 ```
+
+> **No** Windows nativo, o Spark costuma precisar de `winutils.exe` e `hadoop.dll` em `C:\hadoop\bin` para operações de filesystem/permissão.
 
 **winutils**
 
@@ -189,6 +193,8 @@ Para deixar `JAVA_HOME`, `HADOOP_HOME` e `PATH` permanentes: use **Variáveis de
 ---
 
 ## Instalação do ambiente (venv + pip)
+
+> ATENÇÃO: Execute o comando de instalação do ambiente virtual na **raiz do repositório** (pasta onde está `requirements.txt`).
 
 <details>
 <summary><strong>1 - Instalação automática (recomendado no Windows)</strong></summary>
@@ -281,6 +287,54 @@ python -m pip install -r requirements.txt
 
 ---
 
+## Datasets
+
+Os arquivos **não** vêm no clone deste repositório: é preciso clonar os dois repositórios do professor **dentro de** `data/input/` (na raiz do projeto):
+
+<details>
+<summary><strong>Git Bash</strong></summary>
+
+```bash
+mkdir -p data/input
+git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data/input/datasets-csv-pedidos
+git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data/input/dataset-json-pagamentos
+```
+
+</details>
+
+<details>
+<summary><strong>PowerShell</strong></summary>
+
+```powershell
+New-Item -ItemType Directory -Path "data\input" -Force | Out-Null
+git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data\input\datasets-csv-pedidos
+git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data\input\dataset-json-pagamentos
+```
+
+</details>
+
+<details>
+<summary><strong>CMD</strong></summary>
+
+```bat
+mkdir data\input 2>nul
+git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data\input\datasets-csv-pedidos
+git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data\input\dataset-json-pagamentos
+```
+
+</details>
+
+<br>
+
+| Dataset      | Repositório                                              | Caminho local esperado                                   |
+| ------------ | -------------------------------------------------------- | ------------------------------------------------------- |
+| **Pedidos**  | [datasets-csv-pedidos](https://github.com/infobarbosa/datasets-csv-pedidos)   | `data/input/datasets-csv-pedidos/data/pedidos/`         |
+| **Pagamentos** | [dataset-json-pagamentos](https://github.com/infobarbosa/dataset-json-pagamentos) | `data/input/dataset-json-pagamentos/data/pagamentos/`   |
+
+Sem esses clones, o pipeline encerra com mensagem explícita (não dependa só do erro genérico `[PATH_NOT_FOUND]` do Spark).
+
+---
+
 ## Executar o Pipeline
 
 Com o ambiente virtual **ativo** e na **raiz do projeto** (onde está `main.py`):
@@ -290,12 +344,6 @@ Com o ambiente virtual **ativo** e na **raiz do projeto** (onde está `main.py`)
 ```bash
 python main.py
 ```
-
-Se você abriu um terminal novo, ative de novo o venv antes:
-
-- PowerShell: `.\.venv\Scripts\Activate.ps1` (rode antes `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force` se necessário)
-- CMD: `.venv\Scripts\activate.bat`
-- Git Bash: `source .venv/Scripts/activate`
 
 Exemplo informando o ano explicitamente via CLI:
 
@@ -315,6 +363,14 @@ Após instalar o projeto em modo editável (`pip install -e .`), a mesma CLI est
 python -m pipeline --ano-filtro 2024
 projeto-final --ano 2024
 ```
+
+Se você abriu um terminal novo, ative de novo o venv antes:
+
+- PowerShell: `.\.venv\Scripts\Activate.ps1` (rode antes `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force` se necessário)
+- CMD: `.venv\Scripts\activate.bat`
+- Git Bash: `source .venv/Scripts/activate`
+
+
 
 ### Onde fica o resultado?
 

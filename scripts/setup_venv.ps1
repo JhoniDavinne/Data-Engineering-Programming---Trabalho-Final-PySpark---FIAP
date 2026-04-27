@@ -26,4 +26,3 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host ""
 Write-Host "OK: dependencias instaladas no .venv" -ForegroundColor Green
-Write-Host "Proximo: python main.py" -ForegroundColor Green

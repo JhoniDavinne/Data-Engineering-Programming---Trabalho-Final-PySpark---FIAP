@@ -20,4 +20,3 @@ if errorlevel 1 exit /b 1
 
 echo.
 echo OK: dependencias instaladas no .venv
-echo Proximo: python main.py   (nesta mesma janela o venv ja esta ativo)

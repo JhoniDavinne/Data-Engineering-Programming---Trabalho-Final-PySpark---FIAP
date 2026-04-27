@@ -50,4 +50,3 @@ python -m pip install -r requirements.txt
 
 echo ""
 echo "OK: dependencias instaladas no .venv"
-echo "Proximo: python main.py"
