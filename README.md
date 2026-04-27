@@ -408,43 +408,6 @@ O conjunto cobre, entre outros: filtragem `status=false` + `fraude=false`, ano c
 
 ---
 
-## Datasets
-
-Os arquivos **não** vêm no clone deste repositório: é preciso clonar os dois repositórios do professor **dentro de** `data/input/` (na raiz do projeto):
-
-**Git Bash** (a partir da raiz do projeto):
-
-```bash
-mkdir -p data/input
-git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data/input/datasets-csv-pedidos
-git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data/input/dataset-json-pagamentos
-```
-
-**PowerShell** (a partir da raiz do projeto) — **não** use `2>nul` aqui; isso é sintaxe de **CMD** e gera erro no PowerShell.
-
-```powershell
-New-Item -ItemType Directory -Path "data\input" -Force | Out-Null
-git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data\input\datasets-csv-pedidos
-git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data\input\dataset-json-pagamentos
-```
-
-**CMD** (a partir da raiz do projeto):
-
-```bat
-mkdir data\input 2>nul
-git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data\input\datasets-csv-pedidos
-git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data\input\dataset-json-pagamentos
-```
-
-| Dataset      | Repositório                                              | Caminho local esperado                                   |
-| ------------ | -------------------------------------------------------- | ------------------------------------------------------- |
-| **Pedidos**  | [datasets-csv-pedidos](https://github.com/infobarbosa/datasets-csv-pedidos)   | `data/input/datasets-csv-pedidos/data/pedidos/`         |
-| **Pagamentos** | [dataset-json-pagamentos](https://github.com/infobarbosa/dataset-json-pagamentos) | `data/input/dataset-json-pagamentos/data/pagamentos/`   |
-
-Sem esses clones, o pipeline encerra com mensagem explícita (não dependa só do erro genérico `[PATH_NOT_FOUND]` do Spark).
-
----
-
 <details>
 <summary><strong>Configurações (variáveis de ambiente)</strong></summary>
 
