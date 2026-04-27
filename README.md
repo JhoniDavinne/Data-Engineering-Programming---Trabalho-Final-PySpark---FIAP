@@ -30,13 +30,13 @@ Orientação a objetos com injeção de dependências via `main.py` (Aggregation
 ```
 Projeto Final/
 ├── main.py                              # Aggregation Root (DI)
-├── src/projeto_final/
+├── src/
 │   ├── config/app_config.py             # Configurações centralizadas
 │   ├── spark/spark_session_manager.py   # Sessão Spark
 │   ├── schemas/                         # Schemas explícitos (pedidos + pagamentos)
-│   ├── io/reader.py / writer.py         # Leitura e escrita de dados
+│   ├── data_io/reader.py / writer.py    # Leitura e escrita de dados
 │   ├── business/relatorio_pedidos.py    # Regra de negócio
-│   └── pipeline/pipeline_orchestrator.py
+│   └── pipeline/                        # Orquestração + ``python -m pipeline``
 ├── scripts/                             # setup_venv (CMD / PowerShell / Git Bash)
 ├── tests/
 │   ├── conftest.py                      # Fixture SparkSession
@@ -94,13 +94,12 @@ export PATH="$JAVA_HOME/bin:$PATH"
 </details>
 
 <details>
-<summary><strong>Windows (winget) — PowerShell e Git Bash</strong></summary>
+<summary><strong>Windows</strong></summary>
 
-<br>
+**Instalador:** `winget` (Windows 10/11). Em muitas máquinas o PowerShell precisa ser **como administrador** na primeira instalação; no **Git Bash** ou **CMD** o `winget` costuma funcionar se estiver no `PATH`.
 
-**Terminal:** PowerShell (recomendado) **como Administrador** para `winget`, ou **Git Bash** (MSYS2) com `winget` no `PATH` (comum no Windows 10/11).
-
-### PowerShell
+<details>
+<summary><strong>PowerShell</strong></summary>
 
 **Java (JDK 17)**
 
@@ -123,8 +122,10 @@ Invoke-WebRequest -Uri "https://github.com/steveloughran/winutils/raw/master/had
 [Environment]::SetEnvironmentVariable("HADOOP_HOME", "C:\hadoop", "User")
 $env:Path += ";C:\hadoop\bin"
 ```
+</details>
 
-### Git Bash (Windows)
+<details>
+<summary><strong>Git Bash (Windows)</strong></summary>
 
 Use os **mesmos** destinos de pasta; no Bash, o disco `C:\` é `/c/`. Confira o nome exato da pasta do JDK em `/c/Program Files/Microsoft/`.
 
@@ -145,10 +146,42 @@ curl -fsSL -o /c/hadoop/bin/hadoop.dll "https://github.com/steveloughran/winutil
 export HADOOP_HOME="/c/hadoop"
 export PATH="$HADOOP_HOME/bin:$PATH"
 ```
+</details>
 
-Para deixar `JAVA_HOME`, `HADOOP_HOME` e `PATH` permanentes: use **Variáveis de ambiente** do Windows (como no bloco PowerShell) ou adicione os `export` ao `~/.bashrc` do Git Bash, se for sempre usar só esse terminal.
+<details>
+<summary><strong>CMD</strong></summary>
 
-> Se o `winget` não for encontrado no Git Bash, abra o **PowerShell** só para a instalação do JDK e depois defina as variáveis no Bash conforme o caminho real da pasta.
+**Java (JDK 17)**
+
+```bat
+winget install --id Microsoft.OpenJDK.17 --silent --accept-package-agreements --accept-source-agreements
+setx JAVA_HOME "C:\Program Files\Microsoft\jdk-17.0.18.8-hotspot"
+setx HADOOP_HOME "C:\hadoop"
+```
+
+> Ajuste o caminho de `JAVA_HOME` se a pasta do JDK tiver outro nome. Após `setx`, abra um **novo** CMD. Se o comando `java` não for reconhecido, adicione manualmente `;%JAVA_HOME%\bin` e `;%HADOOP_HOME%\bin` à variável de usuário **Path** (Configurações → Variáveis de ambiente) ou use o bloco **PowerShell** acima, que ajusta o `Path` na sessão.
+
+> **No** Windows nativo, o Spark costuma precisar de `winutils.exe` e `hadoop.dll` em `C:\hadoop\bin` para operações de filesystem/permissão.
+
+**winutils** (requer `curl` no CMD — padrão no Windows 10/11)
+
+```bat
+mkdir C:\hadoop\bin 2>nul
+curl -fsSL -o C:\hadoop\bin\winutils.exe "https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/winutils.exe"
+curl -fsSL -o C:\hadoop\bin\hadoop.dll "https://github.com/steveloughran/winutils/raw/master/hadoop-3.0.0/bin/hadoop.dll"
+```
+
+> O `HADOOP_HOME` já foi definido no bloco **Java (JDK 17)** acima. Se o `curl` não existir, use o bloco **PowerShell** para baixar os arquivos ou copie os `Invoke-WebRequest` dali.
+
+</details>
+
+<br>
+
+Para deixar `JAVA_HOME`, `HADOOP_HOME` e `PATH` permanentes: use **Variáveis de ambiente** do Windows (como no bloco PowerShell), `setx` (CMD) ou adicione os `export` ao `~/.bashrc` do Git Bash, se for sempre usar só esse terminal.
+
+<br>
+
+> Se o `winget` não for encontrado no **Git Bash** ou no **CMD**, abra o **PowerShell** só para a instalação do JDK e depois ajuste as variáveis conforme o caminho real da pasta.
 
 </details>
 
@@ -276,6 +309,13 @@ Também é possível usar o alias:
 python main.py --ano 2024
 ```
 
+Após instalar o projeto em modo editável (`pip install -e .`), a mesma CLI está disponível como módulo ou script de console:
+
+```bash
+python -m pipeline --ano-filtro 2024
+projeto-final --ano 2024
+```
+
 ### Onde fica o resultado?
 
 O relatório Parquet é salvo em:
@@ -316,7 +356,15 @@ git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data/input/dat
 git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data/input/dataset-json-pagamentos
 ```
 
-**CMD / PowerShell** (a partir da raiz do projeto):
+**PowerShell** (a partir da raiz do projeto) — **não** use `2>nul` aqui; isso é sintaxe de **CMD** e gera erro no PowerShell.
+
+```powershell
+New-Item -ItemType Directory -Path "data\input" -Force | Out-Null
+git clone https://github.com/infobarbosa/datasets-csv-pedidos.git data\input\datasets-csv-pedidos
+git clone https://github.com/infobarbosa/dataset-json-pagamentos.git data\input\dataset-json-pagamentos
+```
+
+**CMD** (a partir da raiz do projeto):
 
 ```bat
 mkdir data\input 2>nul
@@ -336,7 +384,7 @@ Sem esses clones, o pipeline encerra com mensagem explícita (não dependa só d
 <details>
 <summary><strong>Configurações (variáveis de ambiente)</strong></summary>
 
-Todas centralizadas em `src/projeto_final/config/app_config.py`:
+Todas centralizadas em `src/config/app_config.py`:
 
 | Variável                           | Padrão                                                  |
 | ---------------------------------- | ------------------------------------------------------- |
@@ -360,14 +408,14 @@ Precedência para o ano de filtro: `--ano-filtro` / `--ano` (CLI) > `PROJETO_FIN
 
 | #  | Critério                                  | Localização                                        |
 | -- | ----------------------------------------- | -------------------------------------------------- |
-| 1  | Schemas explícitos (sem inferência)       | `src/projeto_final/schemas/`                       |
+| 1  | Schemas explícitos (sem inferência)       | `src/schemas/`                                     |
 | 2  | Orientação a objetos                      | Todas as camadas                                   |
 | 3  | Injeção de dependências                   | `main.py`                                          |
-| 4  | Configurações centralizadas               | `src/projeto_final/config/app_config.py`           |
-| 5  | Sessão Spark                              | `src/projeto_final/spark/spark_session_manager.py` |
-| 6  | Leitura e escrita (I/O)                   | `src/projeto_final/io/`                            |
-| 7  | Lógica de negócio                         | `src/projeto_final/business/relatorio_pedidos.py`  |
-| 8  | Orquestração do pipeline                  | `src/projeto_final/pipeline/pipeline_orchestrator.py` |
+| 4  | Configurações centralizadas               | `src/config/app_config.py`                         |
+| 5  | Sessão Spark                              | `src/spark/spark_session_manager.py`               |
+| 6  | Leitura e escrita (I/O)                   | `src/data_io/`                                     |
+| 7  | Lógica de negócio                         | `src/business/relatorio_pedidos.py`                |
+| 8  | Orquestração do pipeline                  | `src/pipeline/pipeline_orchestrator.py`            |
 | 9  | Logging                                   | `relatorio_pedidos.py` e `main.py`                 |
 | 10 | Tratamento de erros                       | `try/except` + logging em `main.py` e business     |
 | 11 | Empacotamento                             | `pyproject.toml`, `requirements.txt`, `MANIFEST.in`|

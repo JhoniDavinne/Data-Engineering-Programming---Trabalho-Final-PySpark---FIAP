@@ -8,7 +8,7 @@ from typing import Optional
 
 from pyspark.sql import SparkSession
 
-from projeto_final.config.app_config import AppConfig
+from config.app_config import AppConfig
 
 
 class SparkSessionManager:

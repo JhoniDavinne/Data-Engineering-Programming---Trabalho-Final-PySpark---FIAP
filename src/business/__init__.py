@@ -1,6 +1,6 @@
 """Pacote de lógica de negócios."""
 
-from projeto_final.business.relatorio_pedidos import (
+from business.relatorio_pedidos import (
     RelatorioPedidosRecusadosLegitimos,
 )
 

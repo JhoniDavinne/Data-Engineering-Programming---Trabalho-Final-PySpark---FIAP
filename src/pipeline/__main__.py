@@ -1,4 +1,4 @@
-"""Permite executar o pipeline via ``python -m projeto_final``."""
+"""Permite executar o pipeline via ``python -m pipeline``."""
 
 from __future__ import annotations
 
@@ -7,23 +7,20 @@ import logging
 import os
 import sys
 
-os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
-os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
+_current = sys.executable
+os.environ["PYSPARK_PYTHON"] = _current
+os.environ["PYSPARK_DRIVER_PYTHON"] = _current
 
-from projeto_final.business.relatorio_pedidos import (  # noqa: E402
+from business.relatorio_pedidos import (  # noqa: E402
     RelatorioPedidosRecusadosLegitimos,
 )
-from projeto_final.config.app_config import AppConfig  # noqa: E402
-from projeto_final.io.reader import PagamentosReader, PedidosReader  # noqa: E402
-from projeto_final.io.writer import ParquetWriter  # noqa: E402
-from projeto_final.pipeline.pipeline_orchestrator import (  # noqa: E402
-    PipelineOrchestrator,
-)
-from projeto_final.schemas.pagamentos_schema import PagamentosSchema  # noqa: E402
-from projeto_final.schemas.pedidos_schema import PedidosSchema  # noqa: E402
-from projeto_final.spark.spark_session_manager import (  # noqa: E402
-    SparkSessionManager,
-)
+from config.app_config import AppConfig  # noqa: E402
+from data_io.reader import PagamentosReader, PedidosReader  # noqa: E402
+from data_io.writer import ParquetWriter  # noqa: E402
+from pipeline.pipeline_orchestrator import PipelineOrchestrator  # noqa: E402
+from schemas.pagamentos_schema import PagamentosSchema  # noqa: E402
+from schemas.pedidos_schema import PedidosSchema  # noqa: E402
+from spark.spark_session_manager import SparkSessionManager  # noqa: E402
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -55,7 +52,7 @@ def main() -> int:
         level=getattr(logging, config.log_level.upper(), logging.INFO),
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     )
-    logger = logging.getLogger("projeto_final")
+    logger = logging.getLogger("pipeline")
 
     spark_manager = SparkSessionManager(config)
     spark = spark_manager.get_or_create()

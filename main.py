@@ -38,23 +38,19 @@ _ensure_src_on_path()
 _ensure_pyspark_python()
 
 
-from projeto_final.business.relatorio_pedidos import (  # noqa: E402
+from business.relatorio_pedidos import (
     RelatorioPedidosRecusadosLegitimos,
 )
-from projeto_final.config.app_config import AppConfig  # noqa: E402
-from projeto_final.io.reader import (  # noqa: E402
+from config.app_config import AppConfig
+from data_io.reader import (
     PagamentosReader,
     PedidosReader,
 )
-from projeto_final.io.writer import ParquetWriter  # noqa: E402
-from projeto_final.pipeline.pipeline_orchestrator import (  # noqa: E402
-    PipelineOrchestrator,
-)
-from projeto_final.schemas.pagamentos_schema import PagamentosSchema  # noqa: E402
-from projeto_final.schemas.pedidos_schema import PedidosSchema  # noqa: E402
-from projeto_final.spark.spark_session_manager import (  # noqa: E402
-    SparkSessionManager,
-)
+from data_io.writer import ParquetWriter
+from pipeline.pipeline_orchestrator import PipelineOrchestrator
+from schemas.pagamentos_schema import PagamentosSchema
+from schemas.pedidos_schema import PedidosSchema
+from spark.spark_session_manager import SparkSessionManager
 
 
 def _validate_input_datasets(config: AppConfig) -> None:

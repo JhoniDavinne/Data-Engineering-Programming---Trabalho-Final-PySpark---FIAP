@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import logging
 
-from projeto_final.business.relatorio_pedidos import (
-    RelatorioPedidosRecusadosLegitimos,
-)
-from projeto_final.config.app_config import AppConfig
-from projeto_final.io.reader import PagamentosReader, PedidosReader
-from projeto_final.io.writer import ParquetWriter
+from business.relatorio_pedidos import RelatorioPedidosRecusadosLegitimos
+from config.app_config import AppConfig
+from data_io.reader import PagamentosReader, PedidosReader
+from data_io.writer import ParquetWriter
 
 
 class PipelineOrchestrator:

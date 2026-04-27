@@ -8,8 +8,8 @@ from pathlib import Path
 
 
 def _project_root() -> Path:
-    """Retorna a raiz do projeto (dois níveis acima de src/projeto_final/config)."""
-    return Path(__file__).resolve().parents[3]
+    """Retorna a raiz do projeto (dois níveis acima de ``src/config``)."""
+    return Path(__file__).resolve().parents[2]
 
 
 @dataclass

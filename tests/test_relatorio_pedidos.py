@@ -16,12 +16,10 @@ from pathlib import Path
 import pytest
 from pyspark.sql import SparkSession
 
-from projeto_final.business.relatorio_pedidos import (
-    RelatorioPedidosRecusadosLegitimos,
-)
-from projeto_final.io.reader import PagamentosReader, PedidosReader
-from projeto_final.schemas.pagamentos_schema import PagamentosSchema
-from projeto_final.schemas.pedidos_schema import PedidosSchema
+from business.relatorio_pedidos import RelatorioPedidosRecusadosLegitimos
+from data_io.reader import PagamentosReader, PedidosReader
+from schemas.pagamentos_schema import PagamentosSchema
+from schemas.pedidos_schema import PedidosSchema
 
 
 PEDIDOS_CSV = """\
