@@ -390,13 +390,21 @@ data/output/relatorio_pedidos_recusados_legitimos/
 pytest
 ```
 
-O arquivo `tests/test_relatorio_pedidos.py` valida:
+Saída pensada para acompanhamento didático: cabeçalho com contexto do projeto, cada teste em linha própria (`-v`), cores quando o terminal suporta, **pytest-sugar** (barra de progresso), os 5 testes mais lentos e, ao final, um **painel resumo** (inclui aviso sobre mensagens `PID ... finalizado` no Windows após o Spark encerrar — não são falhas do pytest).
 
-1. Filtragem `status=false` + `fraude=false`
-2. Filtragem pelo ano configurado (default 2025)
-3. Cálculo `valor_total = valor_unitario × quantidade`
-4. Ordenação (`uf`, `forma_pagamento`, `data_criacao`)
-5. Schema de saída (colunas esperadas)
+Módulos em `tests/` (um arquivo por camada, onde fizer sentido):
+
+| Arquivo | Classe / foco principal |
+|--------|-------------------------|
+| `test_pedidos_schema.py` / `test_pagamentos_schema.py` | Schemas explícitos |
+| `test_pedidos_reader.py` / `test_pagamentos_reader.py` | Readers |
+| `test_parquet_writer.py` | Escrita Parquet (encadeamento) |
+| `test_relatorio_pedidos.py` | Regra de negócio e ordenação |
+| `test_app_config.py` | Configuração e globs |
+| `test_spark_session_manager.py` | Sessão Spark (mock) |
+| `test_pipeline_orchestrator.py` | Orquestração ETL (mock) |
+
+O conjunto cobre, entre outros: filtragem `status=false` + `fraude=false`, ano configurável, `valor_total`, ordenação, colunas de saída e fluxo read → transform → write.
 
 ---
 

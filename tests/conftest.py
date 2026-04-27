@@ -1,4 +1,4 @@
-"""Configuração global do pytest.
+"""Configuração global do pytest e fixtures compartilhadas.
 
 - Adiciona ``src/`` ao ``sys.path`` para que os pacotes sejam importáveis
   sem instalação prévia.
@@ -7,26 +7,122 @@
   — importante no Windows, onde o alias da Microsoft Store pode causar
   ``Python was not found`` e travar os workers).
 - Expõe uma ``SparkSession`` local como fixture de escopo de sessão.
+- Fornece arquivos gzip de pedidos/pagamentos de exemplo (módulo de testes).
 """
 
 from __future__ import annotations
 
 import os
 import sys
+import time
 from pathlib import Path
 
 import pytest
 
+_SESSION_T0: float | None = None
+_SESSION_EXITSTATUS: int = 0
+
 ROOT = Path(__file__).resolve().parents[1]
+TESTS_DIR = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
+# Permite ``import fixtures_datasets`` sem empacotar como ``tests.*``
+if str(TESTS_DIR) not in sys.path:
+    sys.path.append(str(TESTS_DIR))
 
 _CURRENT_PYTHON = sys.executable
 os.environ["PYSPARK_PYTHON"] = _CURRENT_PYTHON
 os.environ["PYSPARK_DRIVER_PYTHON"] = _CURRENT_PYTHON
 
 from pyspark.sql import SparkSession  # noqa: E402
+
+from data_io.reader import PagamentosReader, PedidosReader  # noqa: E402
+from schemas.pagamentos_schema import PagamentosSchema  # noqa: E402
+from schemas.pedidos_schema import PedidosSchema  # noqa: E402
+
+from fixtures_datasets import gravar_pedidos_e_pagamentos_gzip  # noqa: E402
+
+
+def pytest_sessionstart(session: pytest.Session) -> None:
+    """Marca o início da sessão (para tempo total no resumo final)."""
+    global _SESSION_T0
+    _SESSION_T0 = time.perf_counter()
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    """Guarda o código de saída para o painel em ``pytest_unconfigure``."""
+    global _SESSION_EXITSTATUS
+    _SESSION_EXITSTATUS = exitstatus
+
+
+def pytest_report_header(config: pytest.Config) -> list[str]:
+    """Cabeçalho didático no topo da execução (camadas do projeto)."""
+    py = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    return [
+        "",
+        " FIAP · Data Engineering Programming — pipeline PySpark (pedidos recusados legítimos)",
+        f" interpretador: {sys.executable}",
+        f" Python {py} · pytest {pytest.__version__}",
+        " camadas exercitadas: PedidosSchema / PagamentosSchema → Readers → Relatório → Orchestrator",
+        "",
+    ]
+
+
+def pytest_unconfigure(config: pytest.Config) -> None:
+    """Ultimo hook do pytest: painel resumo abaixo de duracoes e linha 'passed'."""
+    tr = config.pluginmanager.get_plugin("terminalreporter")
+    if tr is None:
+        return
+
+    global _SESSION_EXITSTATUS
+    exitstatus = _SESSION_EXITSTATUS
+    stats = tr.stats
+    passed = len(stats.get("passed", []))
+    failed = len(stats.get("failed", []))
+    errors = len(stats.get("error", []))
+    skipped = len(stats.get("skipped", []))
+    total = passed + failed + errors + skipped
+
+    elapsed = ""
+    global _SESSION_T0
+    if _SESSION_T0 is not None:
+        elapsed = f"  |  {time.perf_counter() - _SESSION_T0:.2f}s"
+
+    w = 62
+    line = "\u2500" * w
+
+    def row(inner: str, **kw: object) -> None:
+        inner_stripped = inner.replace("\n", " ")
+        if len(inner_stripped) > w:
+            inner_stripped = inner_stripped[: w - 1] + "\u2026"
+        tr.write_line("\u2502" + inner_stripped.ljust(w) + "\u2502", **kw)
+
+    tr.write_line("")
+    tr.write_line("\u256d" + line + "\u256e", bold=True)
+    tr.write_line("\u2502" + " FIAP / PySpark  |  RESUMO DA SUITE ".center(w) + "\u2502", bold=True)
+    tr.write_line("\u251c" + line + "\u2524", bold=True)
+    row(f" total: {total} testes{elapsed}")
+    tr.write_line("\u2502" + f" [ok] aprovados: {passed}".ljust(w) + "\u2502", green=True)
+    if failed:
+        tr.write_line("\u2502" + f" [x]  falhas: {failed}".ljust(w) + "\u2502", red=True)
+    if errors:
+        tr.write_line("\u2502" + f" [!]  erros: {errors}".ljust(w) + "\u2502", red=True)
+    if skipped:
+        tr.write_line("\u2502" + f" [-]  ignorados: {skipped}".ljust(w) + "\u2502", yellow=True)
+
+    ok_msg = " Pipeline OK: schemas, readers, relatorio, orchestrator."
+    bad_msg = " Corrija falhas antes de entregar."
+    tr.write_line("\u251c" + line + "\u2524", bold=True)
+    row(ok_msg if exitstatus == 0 else bad_msg)
+    tr.write_line("\u2570" + line + "\u256f", bold=True)
+    tr.write_line("")
+    tr.write_line(
+        " Nota: linhas 'PID ... finalizado' no Windows sao do encerramento do Spark/JVM;",
+        blue=True,
+    )
+    tr.write_line("       nao fazem parte do resultado do pytest.", blue=True)
+    tr.write_line("")
 
 
 @pytest.fixture(scope="session")
@@ -44,3 +140,25 @@ def spark() -> SparkSession:
     session.sparkContext.setLogLevel("ERROR")
     yield session
     session.stop()
+
+
+@pytest.fixture(scope="module")
+def diretorio_fixtures_pedidos_pagamentos(tmp_path_factory) -> Path:
+    """Pasta com ``pedidos.csv.gz`` e ``pagamentos.json.gz`` (dados didáticos)."""
+    base = tmp_path_factory.mktemp("fixtures_pedidos_pagamentos")
+    gravar_pedidos_e_pagamentos_gzip(base)
+    return base
+
+
+@pytest.fixture(scope="module")
+def dataframe_pedidos_exemplo(spark: SparkSession, diretorio_fixtures_pedidos_pagamentos: Path):
+    """:class:`PedidosReader` lendo o CSV gzip de exemplo."""
+    reader = PedidosReader(spark=spark, schema=PedidosSchema.get())
+    return reader.read(str(diretorio_fixtures_pedidos_pagamentos / "pedidos.csv.gz"))
+
+
+@pytest.fixture(scope="module")
+def dataframe_pagamentos_exemplo(spark: SparkSession, diretorio_fixtures_pedidos_pagamentos: Path):
+    """:class:`PagamentosReader` lendo o JSON gzip de exemplo."""
+    reader = PagamentosReader(spark=spark, schema=PagamentosSchema.get())
+    return reader.read(str(diretorio_fixtures_pedidos_pagamentos / "pagamentos.json.gz"))
