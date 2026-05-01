@@ -42,8 +42,13 @@ def test_gerar_inclui_so_recusados_legitimos_do_ano(
     linhas = resultado.collect()
     ids = [row["id_pedido"] for row in linhas]
 
-    # p2: fraude | p3: aprovado | p4: ano 2024 — excluídos.
-    assert ids == ["p5", "p6", "p1"]
+    # Casos excluídos:
+    #   p2: avaliacao_fraude.fraude=true  (fraude confirmada)
+    #   p3: status=true                   (pagamento aprovado, não recusado)
+    #   p4: data_criacao no ano 2024      (fora do ano_filtro=2025)
+    assert set(ids) == {"p5", "p6", "p1"}, "Filtro de recusados+legítimos+ano incorreto"
+    # Ordenação: RJ/BOLETO/2025-02-20 → SP/PIX/2025-02-01 → SP/PIX/2025-03-10
+    assert ids == ["p5", "p6", "p1"], "Ordenação uf/forma_pagamento/data_criacao incorreta"
     assert set(resultado.columns) == set(
         RelatorioPedidosRecusadosLegitimos.COLUNAS_SAIDA
     )

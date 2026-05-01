@@ -1,7 +1,7 @@
 """Configuração global do pytest e fixtures compartilhadas.
 
-- Adiciona ``src/`` ao ``sys.path`` para que os pacotes sejam importáveis
-  sem instalação prévia.
+- Adiciona ``src/`` ao ``sys.path`` como fallback para quando o pacote
+  não está instalado em modo editável (``pip install -e ".[dev]"``).
 - Fixa ``PYSPARK_PYTHON``/``PYSPARK_DRIVER_PYTHON`` para o interpretador
   atual (evita que o Spark tente resolver ``python`` pelo PATH do sistema
   — importante no Windows, onde o alias da Microsoft Store pode causar
@@ -31,9 +31,17 @@ if str(SRC) not in sys.path:
 if str(TESTS_DIR) not in sys.path:
     sys.path.append(str(TESTS_DIR))
 
+from pipeline.cli import _configure_stdio_utf8_windows  # noqa: E402
+
+_configure_stdio_utf8_windows()
+
 _CURRENT_PYTHON = sys.executable
-os.environ["PYSPARK_PYTHON"] = _CURRENT_PYTHON
-os.environ["PYSPARK_DRIVER_PYTHON"] = _CURRENT_PYTHON
+if os.name == "nt" and " " in _CURRENT_PYTHON:
+    os.environ.pop("PYSPARK_PYTHON", None)
+    os.environ.pop("PYSPARK_DRIVER_PYTHON", None)
+else:
+    os.environ["PYSPARK_PYTHON"] = _CURRENT_PYTHON
+    os.environ["PYSPARK_DRIVER_PYTHON"] = _CURRENT_PYTHON
 
 from pyspark.sql import SparkSession  # noqa: E402
 
@@ -57,20 +65,24 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
 
 
 def pytest_report_header(config: pytest.Config) -> list[str]:
-    """Cabeçalho didático no topo da execução (camadas do projeto)."""
+    """Cabeçalho didático no topo da execução (camadas do projeto).
+
+    Texto em ASCII para evitar caracteres corrompidos em consoles Windows (cp1252)
+    quando o encoding da sessão não está em UTF-8.
+    """
     py = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     return [
         "",
-        " FIAP · Data Engineering Programming — pipeline PySpark (pedidos recusados legítimos)",
+        " FIAP | Data Engineering Programming - pipeline PySpark (pedidos recusados legitimos)",
         f" interpretador: {sys.executable}",
-        f" Python {py} · pytest {pytest.__version__}",
-        " camadas exercitadas: PedidosSchema / PagamentosSchema → Readers → Relatório → Orchestrator",
+        f" Python {py} | pytest {pytest.__version__}",
+        " camadas: config -> cli/run_pipeline -> schemas/readers -> relatorio -> orchestrator",
         "",
     ]
 
 
 def pytest_unconfigure(config: pytest.Config) -> None:
-    """Ultimo hook do pytest: painel resumo abaixo de duracoes e linha 'passed'."""
+    """Último hook do pytest: painel resumo abaixo de durações e linha 'passed'."""
     tr = config.pluginmanager.get_plugin("terminalreporter")
     if tr is None:
         return
@@ -111,7 +123,8 @@ def pytest_unconfigure(config: pytest.Config) -> None:
     if skipped:
         tr.write_line("\u2502" + f" [-]  ignorados: {skipped}".ljust(w) + "\u2502", yellow=True)
 
-    ok_msg = " Pipeline OK: schemas, readers, relatorio, orchestrator."
+    # Até 62 caracteres (largura do painel) para evitar truncamento com "…".
+    ok_msg = " Pipeline OK: config, cli, readers, relatorio, orchestrator."
     bad_msg = " Corrija falhas antes de entregar."
     tr.write_line("\u251c" + line + "\u2524", bold=True)
     row(ok_msg if exitstatus == 0 else bad_msg)
@@ -142,22 +155,26 @@ def spark() -> SparkSession:
     session.stop()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def diretorio_fixtures_pedidos_pagamentos(tmp_path_factory) -> Path:
-    """Pasta com ``pedidos.csv.gz`` e ``pagamentos.json.gz`` (dados didáticos)."""
+    """Pasta com ``pedidos.csv.gz`` e ``pagamentos.json.gz`` (dados didáticos).
+
+    Escopo ``session`` alinhado ao da :fixture:`spark` para evitar re-leitura
+    desnecessária dos gzip a cada módulo de teste.
+    """
     base = tmp_path_factory.mktemp("fixtures_pedidos_pagamentos")
     gravar_pedidos_e_pagamentos_gzip(base)
     return base
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def dataframe_pedidos_exemplo(spark: SparkSession, diretorio_fixtures_pedidos_pagamentos: Path):
     """:class:`PedidosReader` lendo o CSV gzip de exemplo."""
     reader = PedidosReader(spark=spark, schema=PedidosSchema.get())
     return reader.read(str(diretorio_fixtures_pedidos_pagamentos / "pedidos.csv.gz"))
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def dataframe_pagamentos_exemplo(spark: SparkSession, diretorio_fixtures_pedidos_pagamentos: Path):
     """:class:`PagamentosReader` lendo o JSON gzip de exemplo."""
     reader = PagamentosReader(spark=spark, schema=PagamentosSchema.get())

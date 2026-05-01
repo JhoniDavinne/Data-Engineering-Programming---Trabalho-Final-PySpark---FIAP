@@ -3,8 +3,8 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
-if (-not (Test-Path (Join-Path $RepoRoot "requirements.txt"))) {
-    Write-Error "requirements.txt nao encontrado em: $RepoRoot"
+if (-not (Test-Path (Join-Path $RepoRoot "pyproject.toml"))) {
+    Write-Error "pyproject.toml nao encontrado em: $RepoRoot"
 }
 
 # Permite Activate.ps1 apenas neste processo (sem alterar a politica da maquina).
@@ -21,7 +21,7 @@ if (-not (Test-Path $venvPython)) {
 & (Join-Path $RepoRoot ".venv\Scripts\Activate.ps1")
 
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -e ".[dev]"
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host ""

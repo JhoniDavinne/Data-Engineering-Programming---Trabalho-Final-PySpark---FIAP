@@ -17,10 +17,14 @@ def test_spark_session_manager_get_or_create_configura_builder_com_app_config(
     mock_spark_cls,
 ):
     """``appName``, shuffle partitions e timezone vêm do :class:`AppConfig`."""
-    cfg = AppConfig()
-    cfg.app_name = "app-de-teste"
-    cfg.shuffle_partitions = 3
-    cfg.timezone = "America/Sao_Paulo"
+    import dataclasses
+
+    cfg = dataclasses.replace(
+        AppConfig(),
+        app_name="app-de-teste",
+        shuffle_partitions=3,
+        timezone="America/Sao_Paulo",
+    )
 
     chain = MagicMock()
     mock_spark_cls.builder = chain

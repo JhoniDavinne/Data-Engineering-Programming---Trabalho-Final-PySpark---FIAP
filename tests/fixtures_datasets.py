@@ -50,6 +50,8 @@ PAGAMENTOS_JSONL = [
     {
         "id_pedido": "p4",
         "forma_pagamento": "PIX",
+        # valor_pagamento é o valor do ato de pagamento (dataset de pagamentos),
+        # distinto de valor_total calculado do pedido (2000.0 * 2 = 4000.0).
         "valor_pagamento": 1850.0,
         "status": False,
         "data_processamento": "2024-12-31T23:59:59",

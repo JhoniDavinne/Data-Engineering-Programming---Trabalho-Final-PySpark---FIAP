@@ -10,9 +10,7 @@ from pyspark.sql.types import StructType
 def _parse_data_criacao(col: Column) -> Column:
     """Converte ``data_criacao`` textual em timestamp (vários formatos do CSV real)."""
     c = F.trim(F.regexp_replace(col, "^\uFEFF", ""))
-    # Prefixo estável yyyy-MM-ddTHH:mm:ss (ignora fração e sufixo Z / timezone).
-    iso_prefix = F.regexp_extract(c, r"^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2})", 1)
-    iso_t = F.regexp_replace(iso_prefix, " ", "T")
+    # Remove sufixo "Z" para JVMs que não aceitam "Z" como offset em XXX.
     no_z = F.regexp_replace(c, "Z$", "")
     return F.coalesce(
         F.to_timestamp(c, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
@@ -20,8 +18,9 @@ def _parse_data_criacao(col: Column) -> Column:
         F.to_timestamp(c, "yyyy-MM-dd'T'HH:mm:ss.SSS"),
         F.to_timestamp(c, "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"),
         F.to_timestamp(c, "yyyy-MM-dd'T'HH:mm:ss"),
-        F.to_timestamp(no_z, "yyyy-MM-dd'T'HH:mm:ss.SSS"),
-        F.when(iso_t != "", F.to_timestamp(iso_t, "yyyy-MM-dd'T'HH:mm:ss")),
+        # no_z: tenta sem o sufixo Z para Spark/JVM que não aceita "Z" como offset.
+        F.to_timestamp(no_z, "yyyy-MM-dd'T'HH:mm:ss.SSS"),   # "...T12:00:00.123Z"
+        F.to_timestamp(no_z, "yyyy-MM-dd'T'HH:mm:ss"),        # "...T12:00:00Z"
         F.to_timestamp(c, "yyyy-MM-dd HH:mm:ss"),
         F.to_timestamp(c, "yyyy-MM-dd"),
         F.to_timestamp(c, "dd/MM/yyyy HH:mm:ss"),

@@ -1,8 +1,8 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0.."
-if not exist "requirements.txt" (
-  echo ERRO: requirements.txt nao encontrado. Abra o CMD na raiz do repositorio ou execute: scripts\setup_venv.cmd
+if not exist "pyproject.toml" (
+  echo ERRO: pyproject.toml nao encontrado. Abra o CMD na raiz do repositorio ou execute: scripts\setup_venv.cmd
   exit /b 1
 )
 
@@ -15,7 +15,7 @@ if not exist ".venv\Scripts\python.exe" (
 
 call .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -e ".[dev]"
 if errorlevel 1 exit /b 1
 
 echo.

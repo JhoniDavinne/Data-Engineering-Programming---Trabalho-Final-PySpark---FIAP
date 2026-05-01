@@ -26,6 +26,10 @@ class RelatorioPedidosRecusadosLegitimos:
     - ordena por ``uf``, ``forma_pagamento`` e ``data_criacao``.
     """
 
+    #: Contrato documentacional das colunas do relatório final.
+    #: **Não** é utilizada programaticamente no ``select()`` de ``gerar()``
+    #: (que faz o select explícito com ``date_format``). Serve como referência
+    #: para testes e documentação do schema de saída.
     COLUNAS_SAIDA = [
         "id_pedido",
         "uf",
@@ -59,7 +63,12 @@ class RelatorioPedidosRecusadosLegitimos:
             pedidos_filtrados = self._filtrar_pedidos_por_ano(pedidos_df)
 
             self._logger.info("Aplicando join entre pedidos e pagamentos.")
-            relatorio = (
+
+            # Passo 1: computar valor_total com data_criacao ainda como TimestampType.
+            # O sort DEVE acontecer sobre o Timestamp (ordenação temporal correta),
+            # não sobre a string ISO (que seria lexicográfica e produziria resultados
+            # incorretos para timestamps em meses/anos diferentes).
+            base = (
                 pedidos_filtrados.alias("ped")
                 .join(
                     pagamentos_filtrados.alias("pag"),
@@ -73,6 +82,18 @@ class RelatorioPedidosRecusadosLegitimos:
                         * F.col("quantidade").cast("double")
                     ),
                 )
+            )
+
+            # Passo 2: ordenar pelo Timestamp original (antes da conversão para string).
+            # Separar em duas etapas garante que o Catalyst optimizer não reorganize
+            # o plano de forma a aplicar o date_format antes do sort.
+            relatorio = (
+                base
+                .orderBy(
+                    F.col("uf").asc(),
+                    F.col("forma_pagamento").asc(),
+                    F.col("data_criacao").asc(),
+                )
                 .select(
                     F.col("id_pedido"),
                     F.col("uf"),
@@ -83,11 +104,6 @@ class RelatorioPedidosRecusadosLegitimos:
                     F.date_format(
                         F.col("data_criacao"), "yyyy-MM-dd'T'HH:mm:ss"
                     ).alias("data_criacao"),
-                )
-                .orderBy(
-                    F.col("uf").asc(),
-                    F.col("forma_pagamento").asc(),
-                    F.col("data_criacao").asc(),
                 )
             )
 

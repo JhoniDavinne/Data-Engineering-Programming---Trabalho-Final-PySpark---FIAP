@@ -1,3 +1,7 @@
+# Dependências gerenciadas pelo pyproject.toml.
+# Para instalar todas as dependências (prod + dev):
+#   pip install -e ".[dev]"
+#
+# Este arquivo é mantido apenas para compatibilidade com ambientes que
+# não suportam pyproject.toml diretamente (CI legados, etc.).
 pyspark>=3.5,<4.0
-pytest>=8.0,<9.0
-pytest-sugar>=1.0.0

@@ -13,7 +13,8 @@ from data_io.writer import ParquetWriter
 class PipelineOrchestrator:
     """Orquestra as etapas do pipeline: leitura, transformação e escrita.
 
-    Todas as dependências são injetadas via construtor (Aggregation Root).
+    Dependências são injetadas via construtor pelo ponto de composição
+    (:func:`pipeline.cli.run_pipeline`).
     """
 
     def __init__(

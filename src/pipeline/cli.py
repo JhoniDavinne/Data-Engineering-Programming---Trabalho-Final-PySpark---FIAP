@@ -1,7 +1,7 @@
 """Lógica compartilhada de inicialização e execução do pipeline.
 
 Tanto ``main.py`` (raiz) quanto ``python -m pipeline`` delegam para
-:func:`run_pipeline`, evitando duplicação do Aggregation Root.
+:func:`run_pipeline`, ponto único onde as dependências são compostas.
 """
 
 from __future__ import annotations
@@ -22,22 +22,49 @@ def _ensure_pyspark_python() -> None:
     sobrescrevemos as variáveis com ``sys.executable``, não ``setdefault``.
     """
     current = sys.executable
+    if os.name == "nt" and " " in current:
+        # No Git Bash/Windows, PYSPARK_* sem escaping adequado de espaços faz o
+        # launcher do Spark interpretar o caminho errado (ex.: "...Data engineering").
+        # Nesses casos, deixar o PySpark resolver o Python evita o falso positivo
+        # "Missing Python executable" observado em ambiente real.
+        os.environ.pop("PYSPARK_PYTHON", None)
+        os.environ.pop("PYSPARK_DRIVER_PYTHON", None)
+        return
+
     os.environ["PYSPARK_PYTHON"] = current
     os.environ["PYSPARK_DRIVER_PYTHON"] = current
 
 
+def _configure_stdio_utf8_windows() -> None:
+    """Garante UTF-8 no console do Windows para logs com acentos.
+
+    O encoding padrão (ex.: cp1252) corrompe caracteres ao emitir
+    :class:`logging.StreamHandler` em ``stdout``/``stderr``.
+    """
+    if sys.platform != "win32":
+        return
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8")
+        except (OSError, ValueError, TypeError):
+            pass
+
+
 def _validate_input_datasets(config) -> None:
     """Falha cedo com mensagem clara se faltar clone dos repositórios de dados."""
-    from config.app_config import AppConfig  # noqa: F811 — evita circular
+    from config.app_config import resolve_input_directory
 
-    pedidos_dir = Path(config.pedidos_input_path)
-    pagamentos_dir = Path(config.pagamentos_input_path)
+    pedidos_dir = resolve_input_directory(config.pedidos_input_path)
+    pagamentos_dir = resolve_input_directory(config.pagamentos_input_path)
     missing: list[str] = []
 
     if not pedidos_dir.is_dir():
         missing.append(
             f" Pasta inexistente (pedidos): {pedidos_dir}\n"
-            "   -> Faca o clone em data/input conforme a secao Datasets do README."
+            "   -> Faça o clone em data/input conforme a seção Datasets do README."
         )
     elif not list(pedidos_dir.glob("pedidos-*.csv.gz")):
         missing.append(
@@ -49,7 +76,7 @@ def _validate_input_datasets(config) -> None:
     if not pagamentos_dir.is_dir():
         missing.append(
             f" Pasta inexistente (pagamentos): {pagamentos_dir}\n"
-            "   -> Faca o clone em data/input conforme a secao Datasets do README."
+            "   -> Faça o clone em data/input conforme a seção Datasets do README."
         )
     elif not list(pagamentos_dir.glob("pagamentos-*.json.gz")):
         missing.append(
@@ -113,7 +140,10 @@ def run_pipeline(argv: list[str] | None = None) -> int:
 
     config = AppConfig()
     if args.ano_filtro is not None:
-        config.ano_filtro = args.ano_filtro
+        import dataclasses
+        config = dataclasses.replace(config, ano_filtro=args.ano_filtro)
+
+    _configure_stdio_utf8_windows()
 
     logging.basicConfig(
         level=getattr(logging, config.log_level.upper(), logging.INFO),

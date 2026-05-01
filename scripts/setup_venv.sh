@@ -13,8 +13,8 @@ for arg in "$@"; do
   esac
 done
 
-if [[ ! -f requirements.txt ]]; then
-  echo "ERRO: requirements.txt nao encontrado em $REPO_ROOT" >&2
+if [[ ! -f pyproject.toml ]]; then
+  echo "ERRO: pyproject.toml nao encontrado em $REPO_ROOT" >&2
   exit 1
 fi
 
@@ -46,7 +46,7 @@ fi
 # shellcheck disable=SC1091
 source .venv/Scripts/activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -e ".[dev]"
 
 echo ""
 echo "OK: dependencias instaladas no .venv"

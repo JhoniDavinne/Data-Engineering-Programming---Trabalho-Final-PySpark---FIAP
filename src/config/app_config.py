@@ -12,7 +12,39 @@ def _project_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-@dataclass
+def resolve_project_path(path_str: str) -> Path:
+    """Resolve caminho absoluto ancorado na raiz do projeto.
+
+    - caminho absoluto: retorna normalizado com ``resolve()``
+    - caminho relativo: ancora em ``_project_root()``
+    """
+    base = Path(path_str)
+    if not base.is_absolute():
+        base = _project_root() / base
+    return base.resolve()
+
+
+def resolve_input_directory(input_dir: str) -> Path:
+    """Resolve diretório de entrada; caminhos relativos são relativos à raiz do projeto.
+
+    Mesma regra usada em :meth:`AppConfig.pedidos_glob` / :meth:`AppConfig.pagamentos_glob`
+    para manter validação pré-flight e leitura Spark alinhadas.
+    """
+    return resolve_project_path(input_dir)
+
+
+def _safe_int(env_var: str, default: str) -> int:
+    """Converte variável de ambiente para ``int`` com mensagem de erro clara."""
+    raw = os.getenv(env_var, default)
+    try:
+        return int(raw)
+    except ValueError:
+        raise ValueError(
+            f"Variável de ambiente {env_var}={raw!r} não é um inteiro válido."
+        ) from None
+
+
+@dataclass(frozen=True)
 class AppConfig:
     """Configurações centralizadas da aplicação.
 
@@ -28,7 +60,7 @@ class AppConfig:
         )
     )
     ano_filtro: int = field(
-        default_factory=lambda: int(os.getenv("PROJETO_FINAL_ANO_FILTRO", "2025"))
+        default_factory=lambda: _safe_int("PROJETO_FINAL_ANO_FILTRO", "2025")
     )
     log_level: str = field(
         default_factory=lambda: os.getenv("PROJETO_FINAL_LOG_LEVEL", "INFO")
@@ -79,9 +111,7 @@ class AppConfig:
         default_factory=lambda: os.getenv("PROJETO_FINAL_OUTPUT_MODE", "overwrite")
     )
     shuffle_partitions: int = field(
-        default_factory=lambda: int(
-            os.getenv("PROJETO_FINAL_SHUFFLE_PARTITIONS", "8")
-        )
+        default_factory=lambda: _safe_int("PROJETO_FINAL_SHUFFLE_PARTITIONS", "8")
     )
     timezone: str = field(
         default_factory=lambda: os.getenv("PROJETO_FINAL_TIMEZONE", "UTC")
@@ -89,10 +119,15 @@ class AppConfig:
 
     def _spark_glob(self, input_dir: str, file_glob: str) -> str:
         """Caminho com glob no estilo POSIX (Spark no Windows lida melhor assim)."""
-        base = Path(input_dir)
-        if not base.is_absolute():
-            base = _project_root() / base
-        return str((base.resolve() / file_glob).as_posix())
+        return str((resolve_input_directory(input_dir) / file_glob).as_posix())
+
+    def __post_init__(self) -> None:
+        # Garante comportamento determinístico quando output_path vier relativo por env.
+        object.__setattr__(
+            self,
+            "output_path",
+            str(resolve_project_path(self.output_path)),
+        )
 
     @property
     def pedidos_glob(self) -> str:

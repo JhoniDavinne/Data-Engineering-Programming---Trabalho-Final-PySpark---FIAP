@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from pyspark.sql import SparkSession
 
 from config.app_config import AppConfig
@@ -18,7 +16,7 @@ class SparkSessionManager:
 
     def __init__(self, config: AppConfig) -> None:
         self._config = config
-        self._session: Optional[SparkSession] = None
+        self._session: SparkSession | None = None
 
     def get_or_create(self) -> SparkSession:
         """Cria (ou retorna) a ``SparkSession`` configurada."""
@@ -34,6 +32,9 @@ class SparkSessionManager:
                 .config("spark.ui.showConsoleProgress", "false")
             )
             self._session = builder.getOrCreate()
+            # Nível fixo em WARN: o Spark/JVM em INFO/DEBUG gera centenas de
+            # linhas por operação, poluindo a saída. O config.log_level controla
+            # apenas o logging Python da aplicação, não o do Spark.
             self._session.sparkContext.setLogLevel("WARN")
         return self._session
 

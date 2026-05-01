@@ -1,8 +1,8 @@
-"""Aggregation Root do projeto PySpark.
+"""Ponto de entrada ao executar ``python main.py`` na raiz do repositório.
 
-Este módulo garante que ``src/`` esteja no ``sys.path`` e delega para
-:func:`pipeline.cli.run_pipeline`, que instancia todas as dependências
-e executa o pipeline end-to-end.
+Garante que ``src/`` esteja no ``sys.path`` e delega para
+:func:`pipeline.cli.run_pipeline`, onde ocorre a composição das dependências
+(injeção) e a execução end-to-end do pipeline.
 """
 
 from __future__ import annotations

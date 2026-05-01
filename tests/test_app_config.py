@@ -8,8 +8,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import os
+import pytest
 
-from config.app_config import AppConfig
+import config.app_config as app_config_module
+
+from config.app_config import AppConfig, resolve_input_directory, resolve_project_path
 
 
 def test_app_config_defaults_usam_prefixo_projeto_final(monkeypatch):
@@ -24,7 +27,7 @@ def test_app_config_defaults_usam_prefixo_projeto_final(monkeypatch):
     assert cfg.output_mode == "overwrite"
 
 
-def test_app_config_lê_variaveis_de_ambiente(monkeypatch):
+def test_app_config_le_variaveis_de_ambiente(monkeypatch):
     """Cada atributo pode ser configurado por env."""
     monkeypatch.setenv("PROJETO_FINAL_APP_NAME", "meu-app")
     monkeypatch.setenv("PROJETO_FINAL_ANO_FILTRO", "2024")
@@ -52,3 +55,47 @@ def test_app_config_pagamentos_glob_anexa_pattern_json_gz(tmp_path: Path, monkey
     monkeypatch.setenv("PROJETO_FINAL_PAGAMENTOS_PATH", str(tmp_path))
     cfg = AppConfig()
     assert cfg.pagamentos_glob.endswith("pagamentos-*.json.gz")
+
+
+def test_app_config_safe_int_rejeita_valor_nao_numerico(monkeypatch):
+    """Env var inválida gera ValueError com nome da variável."""
+    monkeypatch.setenv("PROJETO_FINAL_ANO_FILTRO", "abc")
+    with pytest.raises(ValueError, match="PROJETO_FINAL_ANO_FILTRO"):
+        AppConfig()
+
+
+def test_resolve_input_directory_absoluto(tmp_path: Path):
+    """Caminho absoluto é apenas normalizado (resolve)."""
+    d = tmp_path / "in"
+    d.mkdir()
+    assert resolve_input_directory(str(d)) == d.resolve()
+
+
+def test_resolve_input_directory_relativo_a_raiz_do_projeto(monkeypatch, tmp_path: Path):
+    """Relativo à raiz do projeto: mesma base que ``pedidos_glob`` / validação pré-flight."""
+    fake_root = tmp_path / "repo_root"
+    fake_root.mkdir()
+    nested = fake_root / "data" / "pedidos"
+    nested.mkdir(parents=True)
+    monkeypatch.setattr(app_config_module, "_project_root", lambda: fake_root)
+    assert resolve_input_directory("data/pedidos") == nested.resolve()
+
+
+def test_resolve_project_path_relativo_a_raiz_do_projeto(monkeypatch, tmp_path: Path):
+    """Resolver genérico também ancora relativos na raiz do projeto."""
+    fake_root = tmp_path / "repo_root"
+    fake_root.mkdir()
+    monkeypatch.setattr(app_config_module, "_project_root", lambda: fake_root)
+    assert resolve_project_path("data/output/relatorio") == (
+        fake_root / "data" / "output" / "relatorio"
+    ).resolve()
+
+
+def test_app_config_output_path_relativo_fica_ancorado_na_raiz(monkeypatch, tmp_path: Path):
+    """Saída relativa via env não depende do cwd; fica ancorada na raiz do repo."""
+    fake_root = tmp_path / "repo_root"
+    fake_root.mkdir()
+    monkeypatch.setattr(app_config_module, "_project_root", lambda: fake_root)
+    monkeypatch.setenv("PROJETO_FINAL_OUTPUT_PATH", "data/output/custom")
+    cfg = AppConfig()
+    assert Path(cfg.output_path) == (fake_root / "data" / "output" / "custom").resolve()
