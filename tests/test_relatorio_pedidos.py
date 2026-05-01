@@ -27,7 +27,7 @@ def test_relatorio_define_colunas_de_saida_esperadas():
 def test_construtor_armazena_ano_filtro():
     """O ano informado no construtor é usado no filtro ``year(data_criacao)``."""
     relatorio = RelatorioPedidosRecusadosLegitimos(ano_filtro=2030)
-    assert relatorio._ano_filtro == 2030
+    assert relatorio.ano_filtro == 2030
 
 
 def test_gerar_inclui_so_recusados_legitimos_do_ano(
@@ -103,4 +103,4 @@ def test_gerar_outro_ano_filtro_retorna_apenas_pedidos_daquele_ano(
     ).collect()
 
     assert [row["id_pedido"] for row in linhas] == ["p4"]
-    assert linhas[0]["valor_total"] == pytest.approx(2000.0)
+    assert linhas[0]["valor_total"] == pytest.approx(4000.0)

@@ -7,11 +7,6 @@ import logging
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
-
 
 class RelatorioPedidosRecusadosLegitimos:
     """Produz o relatório de pedidos cujos pagamentos foram recusados
@@ -42,6 +37,11 @@ class RelatorioPedidosRecusadosLegitimos:
     def __init__(self, ano_filtro: int) -> None:
         self._ano_filtro = ano_filtro
         self._logger = logging.getLogger(self.__class__.__name__)
+
+    @property
+    def ano_filtro(self) -> int:
+        """Ano usado no filtro de pedidos (somente leitura)."""
+        return self._ano_filtro
 
     def gerar(
         self,

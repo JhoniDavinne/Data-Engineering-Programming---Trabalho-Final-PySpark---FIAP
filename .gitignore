@@ -20,3 +20,6 @@ dist/
 
 # Runtime output
 data/output/
+
+# Datasets de entrada (clonados separadamente — ver README)
+data/input/

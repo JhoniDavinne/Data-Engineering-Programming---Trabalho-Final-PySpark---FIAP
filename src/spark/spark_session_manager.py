@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-import sys
 from typing import Optional
 
 from pyspark.sql import SparkSession
@@ -25,9 +23,6 @@ class SparkSessionManager:
     def get_or_create(self) -> SparkSession:
         """Cria (ou retorna) a ``SparkSession`` configurada."""
         if self._session is None:
-            exe = sys.executable
-            os.environ["PYSPARK_PYTHON"] = exe
-            os.environ["PYSPARK_DRIVER_PYTHON"] = exe
             builder = (
                 SparkSession.builder.appName(self._config.app_name)
                 .config(

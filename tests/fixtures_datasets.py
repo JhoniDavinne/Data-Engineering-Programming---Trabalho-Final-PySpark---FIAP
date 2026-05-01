@@ -16,7 +16,7 @@ id_pedido;produto;valor_unitario;quantidade;data_criacao;uf;id_cliente
 p1;NOTEBOOK;1500.0;2;2025-03-10T12:00:00;SP;1
 p2;CELULAR;1000.0;1;2025-04-15T09:00:00;RJ;2
 p3;TABLET;1100.0;3;2025-01-01T00:00:00;MG;3
-p4;GELADEIRA;2000.0;1;2024-12-31T23:59:59;SP;4
+p4;GELADEIRA;2000.0;2;2024-12-31T23:59:59;SP;4
 p5;MONITOR;600.0;4;2025-02-20T08:30:00;RJ;5
 p6;HOMETHEATER;500.0;1;2025-02-01T10:00:00;SP;6
 """
@@ -50,7 +50,7 @@ PAGAMENTOS_JSONL = [
     {
         "id_pedido": "p4",
         "forma_pagamento": "PIX",
-        "valor_pagamento": 2000.0,
+        "valor_pagamento": 1850.0,
         "status": False,
         "data_processamento": "2024-12-31T23:59:59",
         "avaliacao_fraude": {"fraude": False, "score": 0.20},

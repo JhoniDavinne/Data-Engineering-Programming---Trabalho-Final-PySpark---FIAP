@@ -32,7 +32,7 @@ dev = [
 ]
 
 [project.scripts]
-projeto-final = "pipeline.__main__:main"
+projeto-final = "pipeline.cli:run_pipeline"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
