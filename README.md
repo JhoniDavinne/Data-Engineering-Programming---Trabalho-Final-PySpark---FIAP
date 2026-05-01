@@ -354,20 +354,20 @@ python main.py
 Exemplo informando o ano explicitamente via CLI:
 
 ```bash
-python main.py --ano-filtro 2024
+python main.py --ano-filtro 2025
 ```
 
 Também é possível usar o alias:
 
 ```bash
-python main.py --ano 2024
+python main.py --ano 2025
 ```
 
 Após instalar o projeto em modo editável (`pip install -e .`), a mesma CLI está disponível como módulo ou script de console:
 
 ```bash
-python -m pipeline --ano-filtro 2024
-projeto-final --ano 2024
+python -m pipeline --ano-filtro 2025
+projeto-final --ano 2025
 ```
 
 Se você abriu um terminal novo, ative de novo o venv antes:
