@@ -39,8 +39,14 @@ Projeto Final/
 │   └── pipeline/                        # Orquestração + ``python -m pipeline``
 ├── scripts/                             # setup_venv (CMD / PowerShell / Git Bash)
 ├── tests/
-│   ├── conftest.py                      # Fixture SparkSession
-│   └── test_relatorio_pedidos.py        # Testes unitários
+│   ├── conftest.py                      # Fixture SparkSession + fixtures de dados
+│   ├── test_*_schema.py                 # Schemas pedidos / pagamentos
+│   ├── test_*_reader.py                 # Readers
+│   ├── test_parquet_writer.py
+│   ├── test_relatorio_pedidos.py        # Regra de negócio
+│   ├── test_app_config.py
+│   ├── test_spark_session_manager.py
+│   └── test_pipeline_orchestrator.py
 └── data/
     ├── input/                           # Datasets (CSV.gz + JSON.gz)
     └── output/                          # ⬅ Resultado do pipeline (Parquet)
@@ -392,19 +398,43 @@ pytest
 
 Saída pensada para acompanhamento didático: cabeçalho com contexto do projeto, cada teste em linha própria (`-v`), cores quando o terminal suporta, **pytest-sugar** (barra de progresso), os 5 testes mais lentos e, ao final, um **painel resumo** (inclui aviso sobre mensagens `PID ... finalizado` no Windows após o Spark encerrar — não são falhas do pytest).
 
-Módulos em `tests/` (um arquivo por camada, onde fizer sentido):
+Módulos em `tests/` (um arquivo por camada, onde fizer sentido). Cada linha refere-se a **um** teste (`def test_...`): classe de produção sob verificação e foco do caso.
 
-| Arquivo | Classe / foco principal |
-|--------|-------------------------|
-| `test_pedidos_schema.py` / `test_pagamentos_schema.py` | Schemas explícitos |
-| `test_pedidos_reader.py` / `test_pagamentos_reader.py` | Readers |
-| `test_parquet_writer.py` | Escrita Parquet (encadeamento) |
-| `test_relatorio_pedidos.py` | Regra de negócio e ordenação |
-| `test_app_config.py` | Configuração e globs |
-| `test_spark_session_manager.py` | Sessão Spark (mock) |
-| `test_pipeline_orchestrator.py` | Orquestração ETL (mock) |
+| Arquivo | Classe | Teste | Foco principal |
+|--------|--------|-------|----------------|
+| `test_pedidos_schema.py` | `PedidosSchema` | `test_pedidos_schema_get_retorna_mesma_estrutura_que_constante` | `get()` expõe o mesmo `StructType` que `SCHEMA`. |
+| `test_pedidos_schema.py` | `PedidosSchema` | `test_pedidos_schema_contem_colunas_obrigatorias_do_negocio` | Tipos das colunas do CSV (id, produto, valores, datas, UF, cliente). |
+| `test_pedidos_schema.py` | `PedidosSchema` | `test_pedidos_schema_id_pedido_nao_nulo` | `id_pedido` com `nullable=False` no schema explícito. |
+| `test_pagamentos_schema.py` | `PagamentosSchema` | `test_pagamentos_schema_get_retorna_schema_documentado` | `get()` expõe o `StructType` principal documentado. |
+| `test_pagamentos_schema.py` | `PagamentosSchema` | `test_pagamentos_schema_avaliacao_fraude_aninhada` | Struct `avaliacao_fraude` com `fraude` (bool) e `score` (double). |
+| `test_pagamentos_schema.py` | `PagamentosSchema` | `test_pagamentos_schema_colunas_principais` | Tipos das colunas de primeiro nível do JSON Lines. |
+| `test_pedidos_reader.py` | `PedidosReader` | `test_pedidos_reader_opcoes_csv_alinhadas_ao_dataset_real` | Opções CSV: `;`, header, UTF-8, modo PERMISSIVE. |
+| `test_pedidos_reader.py` | `PedidosReader` | `test_pedidos_reader_read_parseia_data_criacao_como_timestamp` | Após `read`, `data_criacao` é `timestamp` (não string bruta). |
+| `test_pedidos_reader.py` | `PedidosReader` | `test_pedidos_reader_read_preserva_todas_as_linhas_do_fixture` | Contagem de linhas do fixture gzip (nenhuma perdida pelo parser de data). |
+| `test_pagamentos_reader.py` | `PagamentosReader` | `test_pagamentos_reader_opcoes_json` | `JSON_OPTIONS`: PERMISSIVE e `timestampFormat` compatível com o dataset. |
+| `test_pagamentos_reader.py` | `PagamentosReader` | `test_pagamentos_reader_read_carrega_avaliacao_fraude_aninhada` | Campo `avaliacao_fraude.fraude` acessível após a leitura. |
+| `test_pagamentos_reader.py` | `PagamentosReader` | `test_pagamentos_reader_read_conta_todas_as_linhas_jsonl` | Uma linha JSON por registro; contagem do fixture. |
+| `test_parquet_writer.py` | `ParquetWriter` | `test_parquet_writer_construtor_guarda_modo_e_compressao` | Construtor persiste `mode` e `compression` injetados. |
+| `test_parquet_writer.py` | `ParquetWriter` | `test_parquet_writer_write_encadeia_mode_opcao_compression_e_parquet` | `write` encadeia `mode` → `option(compression)` → `parquet(path)` (mock). |
+| `test_relatorio_pedidos.py` | `RelatorioPedidosRecusadosLegitimos` | `test_relatorio_define_colunas_de_saida_esperadas` | `COLUNAS_SAIDA` corresponde ao contrato do relatório. |
+| `test_relatorio_pedidos.py` | `RelatorioPedidosRecusadosLegitimos` | `test_construtor_armazena_ano_filtro` | Ano informado no construtor usado no filtro por ano. |
+| `test_relatorio_pedidos.py` | `RelatorioPedidosRecusadosLegitimos` | `test_gerar_inclui_so_recusados_legitimos_do_ano` | Só `status=false`, `fraude=false` e ano do pedido = `ano_filtro`; colunas de saída. |
+| `test_relatorio_pedidos.py` | `RelatorioPedidosRecusadosLegitimos` | `test_gerar_ordenacao_uf_forma_pagamento_data_criacao` | Ordenação `uf` → `forma_pagamento` → `data_criacao` (ASC). |
+| `test_relatorio_pedidos.py` | `RelatorioPedidosRecusadosLegitimos` | `test_gerar_valor_total_e_produto_unitario_por_quantidade` | `valor_total = valor_unitario × quantidade`. |
+| `test_relatorio_pedidos.py` | `RelatorioPedidosRecusadosLegitimos` | `test_gerar_data_criacao_saida_formato_string_iso` | `data_criacao` na saída como string ISO (compatível com export). |
+| `test_relatorio_pedidos.py` | `RelatorioPedidosRecusadosLegitimos` | `test_gerar_outro_ano_filtro_retorna_apenas_pedidos_daquele_ano` | Trocar `ano_filtro` restringe pedidos antes do join. |
+| `test_app_config.py` | `AppConfig` | `test_app_config_defaults_usam_prefixo_projeto_final` | Defaults determinísticos sem variáveis `PROJETO_FINAL_*`. |
+| `test_app_config.py` | `AppConfig` | `test_app_config_lê_variaveis_de_ambiente` | Sobrescrita por env (app name, ano, log, shuffle, timezone). |
+| `test_app_config.py` | `AppConfig` | `test_app_config_pedidos_glob_anexa_pattern_csv_gz` | `pedidos_glob` com sufixo `pedidos-*.csv.gz`. |
+| `test_app_config.py` | `AppConfig` | `test_app_config_pagamentos_glob_anexa_pattern_json_gz` | `pagamentos_glob` com sufixo `pagamentos-*.json.gz`. |
+| `test_spark_session_manager.py` | `SparkSessionManager` | `test_spark_session_manager_get_or_create_configura_builder_com_app_config` | Builder com `appName`, shuffle partitions, timezone e AQE a partir do `AppConfig` (mock). |
+| `test_spark_session_manager.py` | `SparkSessionManager` | `test_spark_session_manager_get_or_create_reutiliza_instancia_interna` | Segunda chamada a `get_or_create()` reutiliza sessão em cache. |
+| `test_spark_session_manager.py` | `SparkSessionManager` | `test_spark_session_manager_stop_sem_criar_sessao_nao_explode` | `stop()` sem sessão criada é no-op seguro. |
+| `test_pipeline_orchestrator.py` | `PipelineOrchestrator` | `test_pipeline_orchestrator_run_chama_read_gerar_write_na_ordem` | `run`: `read` pedidos e pagamentos → `gerar` → `write` nos paths do config (mocks). |
 
 O conjunto cobre, entre outros: filtragem `status=false` + `fraude=false`, ano configurável, `valor_total`, ordenação, colunas de saída e fluxo read → transform → write.
+
+**Suporte (não são `test_*.py`):** `conftest.py` centraliza a `SparkSession` de teste, variáveis `PYSPARK_*` e fixtures (`spark`, diretório gzip de pedidos/pagamentos, DataFrames de exemplo); `fixtures_datasets.py` gera os arquivos sintéticos usados pelos readers e pelo relatório.
 
 ---
 
@@ -446,7 +476,7 @@ Precedência para o ano de filtro: `--ano-filtro` / `--ano` (CLI) > `PROJETO_FIN
 | 9  | Logging                                   | `relatorio_pedidos.py` e `main.py`                 |
 | 10 | Tratamento de erros                       | `try/except` + logging em `main.py` e business     |
 | 11 | Empacotamento                             | `pyproject.toml`, `requirements.txt`, `MANIFEST.in`|
-| 12 | Testes unitários                          | `tests/test_relatorio_pedidos.py`                  |
+| 12 | Testes unitários                          | `tests/` (tabela na seção **Executar os Testes**) |
 
 </details>
 
